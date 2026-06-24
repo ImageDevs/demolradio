@@ -13,7 +13,7 @@ window.RADIO_CONFIG = {
   // To use your own recording, set one of:
   //  1) A file committed into this repo, e.g. "broadcast.mp3"
   //  2) A direct Google Drive link (use setup.html to convert a share link)
-  AUDIO_SRC: "",
+  AUDIO_SRC: "broadcast.mp3",
 
   // If true, the audio loops while the listener stays tuned in.
   LOOP: true
