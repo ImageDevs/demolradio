@@ -88,16 +88,6 @@
     border-top: 6px solid var(--red);
   }
 
-  .signal {
-    display: flex; align-items: flex-end; gap: 3px; justify-content: center;
-    margin-top: 14px; height: 22px;
-  }
-  .signal .bar { width: 6px; background: var(--amber-dim); border-radius: 1px; transition: background .15s, box-shadow .15s; }
-  .signal .bar.lit { background: var(--green); box-shadow: 0 0 6px rgba(111,232,155,.8); }
-  .signal .bar:nth-child(1){height:6px}.signal .bar:nth-child(2){height:10px}
-  .signal .bar:nth-child(3){height:14px}.signal .bar:nth-child(4){height:18px}
-  .signal .bar:nth-child(5){height:22px}
-
   .status {
     text-align: center; margin-top: 8px; font-size: 11px; letter-spacing: 3px;
     color: var(--text-dim); min-height: 14px; text-transform: uppercase;
@@ -170,10 +160,6 @@
         <div class="ticks" id="ticks"></div>
         <div class="needle" id="needle"></div>
       </div>
-      <div class="signal" id="signal">
-        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
-        <span class="bar"></span><span class="bar"></span>
-      </div>
       <div class="status" id="status">STANDBY</div>
     </div>
 
@@ -209,9 +195,7 @@
     const freqNum = document.getElementById('freqNum');
     const needle  = document.getElementById('needle');
     const status  = document.getElementById('status');
-    const signal  = document.getElementById('signal');
     const power   = document.getElementById('power');
-    const bars    = [...signal.querySelectorAll('.bar')];
     const audio   = document.getElementById('broadcastAudio');
     const noise   = document.getElementById('staticAudio');
 
@@ -321,8 +305,6 @@
     }
 
     const freq = () => (+tuner.value) / 10;
-    const setSignal = n => bars.forEach((b,i) => b.classList.toggle('lit', i < n));
-
     function lock() {
       if (locked) return;
       locked = true;
@@ -350,21 +332,19 @@
       needle.style.left = ((+tuner.value - MIN) / (MAX - MIN)) * 100 + '%';
 
       if (!powered) {
-        setSignal(0); setStatic(0); status.textContent = 'STANDBY'; status.classList.remove('locked');
+        setStatic(0); status.textContent = 'STANDBY'; status.classList.remove('locked');
         return;
       }
       const dist = Math.abs(f - cfg.TARGET);
       if (dist <= cfg.TOLERANCE) {
-        setSignal(5); lock();
+        lock();
       } else {
         unlock();
         if (dist < 1.5) {
-          const strength = Math.max(1, Math.round((1.5 - dist) / 1.5 * 4));
-          setSignal(strength);
-          setStatic(1 - (1.5 - dist) / 1.5 * 0.6); // louder static the further off
+          setStatic(1 - (1.5 - dist) / 1.5 * 0.6);
           status.textContent = 'SEARCHING…';
         } else {
-          setSignal(0); setStatic(1); status.textContent = 'NO SIGNAL';
+          setStatic(1); status.textContent = 'NO SIGNAL';
         }
       }
     }
