@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Numbers Station</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Oswald:wght@300;500;700&display=swap');
+
+  :root {
+    --bg: #1a1611;
+    --panel-edge: #3d3422;
+    --amber: #ffb547;
+    --amber-dim: #8a5d1e;
+    --glow: #ffd089;
+    --green: #6fe89b;
+    --red: #e8615a;
+    --text-dim: #9a8a6b;
+    --dial-face: #14110c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: radial-gradient(ellipse at 50% 0%, #2a2218 0%, var(--bg) 70%);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+    color: var(--amber);
+    padding: 24px;
+  }
+  .radio {
+    width: 100%; max-width: 560px;
+    background: linear-gradient(170deg, #3a3122 0%, #2b2419 40%, #221c12 100%);
+    border-radius: 14px; border: 1px solid var(--panel-edge);
+    box-shadow: 0 30px 60px rgba(0,0,0,.6),
+      inset 0 1px 0 rgba(255,200,120,.08), inset 0 -2px 8px rgba(0,0,0,.5);
+    padding: 28px 28px 32px; position: relative;
+  }
+  .screw {
+    position: absolute; width: 9px; height: 9px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #5a4d35, #1a150d);
+    box-shadow: inset 0 0 2px rgba(0,0,0,.8);
+  }
+  .screw.tl{top:12px;left:12px}.screw.tr{top:12px;right:12px}
+  .screw.bl{bottom:12px;left:12px}.screw.br{bottom:12px;right:12px}
+
+  .brand {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 18px; padding: 0 6px;
+  }
+  .brand h1 {
+    font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 22px;
+    letter-spacing: 4px; color: var(--glow);
+    text-shadow: 0 0 12px rgba(255,181,71,.3);
+  }
+  .brand .model { font-size: 10px; letter-spacing: 2px; color: var(--text-dim); }
+
+  .display {
+    background: var(--dial-face); border-radius: 8px; border: 1px solid #000;
+    box-shadow: inset 0 2px 12px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,181,71,.06);
+    padding: 18px 16px 12px; position: relative; overflow: hidden;
+  }
+  .display::after {
+    content:''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(to bottom, rgba(255,181,71,.025) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+  }
+  .freq-readout {
+    text-align: center; font-family: 'Oswald', sans-serif; font-weight: 500;
+    letter-spacing: 2px; margin-bottom: 14px;
+  }
+  .freq-readout .num { font-size: 46px; color: var(--glow); text-shadow: 0 0 16px rgba(255,181,71,.5); }
+  .freq-readout .unit { font-size: 14px; color: var(--amber-dim); letter-spacing: 3px; }
+
+  .scale { position: relative; height: 46px; margin: 0 4px; }
+  .ticks { position: relative; height: 28px; border-bottom: 1px solid var(--amber-dim); }
+  .tick { position: absolute; bottom: 0; width: 1px; background: var(--amber-dim); }
+  .tick.major { height: 16px; background: var(--amber); }
+  .tick.minor { height: 8px; }
+  .tick-label { position: absolute; top: 0; transform: translateX(-50%); font-size: 10px; color: var(--text-dim); }
+  .needle {
+    position: absolute; top: -4px; width: 2px; height: 40px; background: var(--red);
+    box-shadow: 0 0 8px rgba(232,97,90,.9); transform: translateX(-50%);
+    transition: left .05s linear; z-index: 3;
+  }
+  .needle::before {
+    content:''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 6px solid var(--red);
+  }
+
+  .signal {
+    display: flex; align-items: flex-end; gap: 3px; justify-content: center;
+    margin-top: 14px; height: 22px;
+  }
+  .signal .bar { width: 6px; background: var(--amber-dim); border-radius: 1px; transition: background .15s, box-shadow .15s; }
+  .signal .bar.lit { background: var(--green); box-shadow: 0 0 6px rgba(111,232,155,.8); }
+  .signal .bar:nth-child(1){height:6px}.signal .bar:nth-child(2){height:10px}
+  .signal .bar:nth-child(3){height:14px}.signal .bar:nth-child(4){height:18px}
+  .signal .bar:nth-child(5){height:22px}
+
+  .status {
+    text-align: center; margin-top: 8px; font-size: 11px; letter-spacing: 3px;
+    color: var(--text-dim); min-height: 14px; text-transform: uppercase;
+  }
+  .status.locked { color: var(--green); text-shadow: 0 0 8px rgba(111,232,155,.5); }
+
+  .controls { margin-top: 24px; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; }
+  .tuner-wrap label { display: block; font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
+    border-radius: 3px; background: linear-gradient(90deg, var(--amber-dim), #4a3a1f); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 34px; border-radius: 4px;
+    background: linear-gradient(180deg, #6a5a3c, #2a2014); border: 1px solid #000;
+    box-shadow: 0 2px 5px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,200,120,.3); cursor: grab;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 34px; border-radius: 4px;
+    background: linear-gradient(180deg, #6a5a3c, #2a2014); border: 1px solid #000; cursor: grab;
+  }
+  .fine { display: flex; gap: 8px; margin-top: 12px; }
+  .fine button {
+    flex: 1; background: linear-gradient(180deg, #3a3122, #241d12); border: 1px solid var(--panel-edge);
+    color: var(--amber); font-family: 'DM Mono', monospace; font-size: 14px; padding: 6px 0;
+    border-radius: 5px; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,200,120,.1);
+  }
+  .fine button:active { background: #1c160d; box-shadow: inset 0 2px 4px rgba(0,0,0,.6); }
+
+  .knob { text-align: center; }
+  .knob .dial {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #5a4d35, #1c160d 70%);
+    border: 2px solid #100c07; box-shadow: 0 4px 10px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,200,120,.2);
+    margin: 0 auto; position: relative; cursor: pointer; transition: box-shadow .2s;
+  }
+  .knob .dial::after {
+    content:''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 3px; height: 16px; border-radius: 2px; background: var(--text-dim);
+  }
+  .knob.on .dial { box-shadow: 0 4px 10px rgba(0,0,0,.6), inset 0 1px 2px rgba(255,200,120,.2), 0 0 18px rgba(255,181,71,.5); }
+  .knob.on .dial::after { background: var(--glow); box-shadow: 0 0 6px var(--glow); }
+  .knob label { display:block; font-size: 9px; letter-spacing: 2px; color: var(--text-dim); margin-top: 8px; }
+
+  .hint { text-align:center; margin-top: 20px; font-size: 10px; letter-spacing: 2px; color: #5a4d35; }
+
+  @media (max-width: 460px) {
+    .freq-readout .num { font-size: 36px; }
+    .controls { grid-template-columns: 1fr; }
+    .knob { order: -1; }
+  }
+</style>
+</head>
+<body>
+  <main class="radio">
+    <span class="screw tl"></span><span class="screw tr"></span>
+    <span class="screw bl"></span><span class="screw br"></span>
+
+    <div class="brand">
+      <h1>VEGA&nbsp;7</h1>
+      <span class="model">SHORTWAVE RECEIVER · MOD. SW-7</span>
+    </div>
+
+    <div class="display">
+      <div class="freq-readout">
+        <span class="num" id="freqNum">88.0</span>
+        <span class="unit">MHz</span>
+      </div>
+      <div class="scale">
+        <div class="ticks" id="ticks"></div>
+        <div class="needle" id="needle"></div>
+      </div>
+      <div class="signal" id="signal">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span>
+      </div>
+      <div class="status" id="status">STANDBY</div>
+    </div>
+
+    <div class="controls">
+      <div class="tuner-wrap">
+        <label>Tuning</label>
+        <input type="range" id="tuner" min="880" max="1080" value="880" step="1">
+        <div class="fine">
+          <button id="down">◂ FINE</button>
+          <button id="up">FINE ▸</button>
+        </div>
+      </div>
+      <div class="knob" id="power">
+        <div class="dial"></div>
+        <label>POWER</label>
+      </div>
+    </div>
+
+    <div class="hint">TURN POWER ON · TUNE TO FIND A SIGNAL</div>
+  </main>
+
+  <!-- audio elements -->
+  <audio id="broadcastAudio" preload="auto"></audio>
+  <audio id="staticAudio" loop preload="auto"></audio>
+
+  <script src="config.js"></script>
+  <script>
+  (function () {
+    const defaults = { TARGET: 104.5, TOLERANCE: 0.2, AUDIO_SRC: "", LOOP: true };
+    const cfg = Object.assign({}, defaults, window.RADIO_CONFIG || {});
+
+    const tuner   = document.getElementById('tuner');
+    const freqNum = document.getElementById('freqNum');
+    const needle  = document.getElementById('needle');
+    const status  = document.getElementById('status');
+    const signal  = document.getElementById('signal');
+    const power   = document.getElementById('power');
+    const bars    = [...signal.querySelectorAll('.bar')];
+    const audio   = document.getElementById('broadcastAudio');
+    const noise   = document.getElementById('staticAudio');
+
+    const MIN = +tuner.min, MAX = +tuner.max;
+    let powered = false;
+    let locked = false;
+
+    const hasFile = !!(cfg.AUDIO_SRC && cfg.AUDIO_SRC.trim());
+    if (hasFile) {
+      audio.src = cfg.AUDIO_SRC;
+      audio.loop = !!cfg.LOOP;
+    }
+
+    // Generate soft static with the Web Audio API (no file needed).
+    let audioCtx = null, noiseNode = null, noiseGain = null;
+    function startStatic() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bufferSize = 2 * audioCtx.sampleRate;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+        noiseNode = audioCtx.createBufferSource();
+        noiseNode.buffer = buffer; noiseNode.loop = true;
+        noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 0;
+        noiseNode.connect(noiseGain).connect(audioCtx.destination);
+        noiseNode.start(0);
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function setStatic(level) { // 0..1
+      if (noiseGain) noiseGain.gain.setTargetAtTime(level * 0.25, audioCtx.currentTime, 0.1);
+    }
+
+    // ----- Built-in default broadcast (used when no audio file is set) -----
+    // A short interval tune + spoken numbers, generated with Web Audio +
+    // speech synthesis, so the radio always "works" out of the box.
+    const DEFAULT_LINES = [
+      "Attention. Attention.",
+      "Three. Seven. One. Niner.",
+      "Eight. Two. Four. Six.",
+      "Message repeats.",
+      "Three. Seven. One. Niner.",
+      "Eight. Two. Four. Six.",
+      "End of transmission."
+    ];
+    let defaultTimer = null, toneOsc = null, toneGain = null, defaultActive = false;
+
+    function playTone(freqHz, dur, when) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = freqHz;
+      g.gain.setValueAtTime(0, when);
+      g.gain.linearRampToValueAtTime(0.15, when + 0.02);
+      g.gain.setValueAtTime(0.15, when + dur - 0.05);
+      g.gain.linearRampToValueAtTime(0, when + dur);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(when); o.stop(when + dur);
+    }
+
+    function speak(text) {
+      return new Promise(res => {
+        if (!('speechSynthesis' in window)) { setTimeout(res, 700); return; }
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.85; u.pitch = 0.7; u.volume = 1;
+        u.onend = res; u.onerror = res;
+        speechSynthesis.speak(u);
+      });
+    }
+
+    async function runDefaultBroadcast() {
+      defaultActive = true;
+      // interval signal: two-tone call
+      const t0 = audioCtx.currentTime + 0.1;
+      playTone(800, 0.25, t0);
+      playTone(1000, 0.25, t0 + 0.3);
+      await new Promise(r => setTimeout(r, 900));
+      for (let i = 0; i < DEFAULT_LINES.length && defaultActive; i++) {
+        await speak(DEFAULT_LINES[i]);
+        if (!defaultActive) break;
+        await new Promise(r => setTimeout(r, 350));
+      }
+      if (defaultActive && cfg.LOOP) {
+        await new Promise(r => setTimeout(r, 1200));
+        if (defaultActive) runDefaultBroadcast();
+      }
+    }
+    function stopDefaultBroadcast() {
+      defaultActive = false;
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+    }
+
+    // tick marks
+    const ticks = document.getElementById('ticks');
+    for (let f = 88; f <= 108; f += 0.5) {
+      const pct = ((f*10 - MIN) / (MAX - MIN)) * 100;
+      const t = document.createElement('div');
+      t.className = 'tick ' + (Number.isInteger(f) ? 'major' : 'minor');
+      t.style.left = pct + '%';
+      ticks.appendChild(t);
+      if (Number.isInteger(f) && f % 4 === 0) {
+        const lab = document.createElement('div');
+        lab.className = 'tick-label'; lab.style.left = pct + '%'; lab.textContent = f;
+        ticks.appendChild(lab);
+      }
+    }
+
+    const freq = () => (+tuner.value) / 10;
+    const setSignal = n => bars.forEach((b,i) => b.classList.toggle('lit', i < n));
+
+    function lock() {
+      if (locked) return;
+      locked = true;
+      setStatic(0);
+      if (hasFile) {
+        audio.currentTime = 0;
+        audio.play().catch(()=>{});
+      } else {
+        runDefaultBroadcast();
+      }
+      status.textContent = 'SIGNAL LOCKED';
+      status.classList.add('locked');
+    }
+    function unlock() {
+      if (!locked) return;
+      locked = false;
+      if (hasFile) audio.pause();
+      else stopDefaultBroadcast();
+      status.classList.remove('locked');
+    }
+
+    function update() {
+      const f = freq();
+      freqNum.textContent = f.toFixed(1);
+      needle.style.left = ((+tuner.value - MIN) / (MAX - MIN)) * 100 + '%';
+
+      if (!powered) {
+        setSignal(0); setStatic(0); status.textContent = 'STANDBY'; status.classList.remove('locked');
+        return;
+      }
+      const dist = Math.abs(f - cfg.TARGET);
+      if (dist <= cfg.TOLERANCE) {
+        setSignal(5); lock();
+      } else {
+        unlock();
+        if (dist < 1.5) {
+          const strength = Math.max(1, Math.round((1.5 - dist) / 1.5 * 4));
+          setSignal(strength);
+          setStatic(1 - (1.5 - dist) / 1.5 * 0.6); // louder static the further off
+          status.textContent = 'SEARCHING…';
+        } else {
+          setSignal(0); setStatic(1); status.textContent = 'NO SIGNAL';
+        }
+      }
+    }
+
+    power.addEventListener('click', () => {
+      powered = !powered;
+      power.classList.toggle('on', powered);
+      if (powered) { startStatic(); }
+      else { unlock(); stopDefaultBroadcast(); setStatic(0); if (audioCtx && audioCtx.state==='running') audioCtx.suspend(); }
+      update();
+    });
+
+    tuner.addEventListener('input', update);
+    document.getElementById('up').addEventListener('click', () => { tuner.value = Math.min(MAX, +tuner.value + 1); update(); });
+    document.getElementById('down').addEventListener('click', () => { tuner.value = Math.max(MIN, +tuner.value - 1); update(); });
+
+    update();
+  })();
+  </script>
+</body>
+</html>
