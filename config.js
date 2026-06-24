@@ -16,5 +16,5 @@ window.RADIO_CONFIG = {
   AUDIO_SRC: "broadcast.mp3",
 
   // If true, the audio loops while the listener stays tuned in.
-  LOOP: true
+  LOOP: false
 };
