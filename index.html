@@ -160,7 +160,7 @@
         <div class="ticks" id="ticks"></div>
         <div class="needle" id="needle"></div>
       </div>
-      <div class="status" id="status">ATTENTION, the radio works so stop your whining!</div>
+      <div class="status" id="status">STANDBY</div>
     </div>
 
     <div class="controls">
@@ -315,7 +315,7 @@
       } else {
         runDefaultBroadcast();
       }
-      status.textContent = 'ATTENTION, the radio works so stop your whining!';
+      status.textContent = 'SIGNAL LOCKED';
       status.classList.add('locked');
     }
     function unlock() {
@@ -332,7 +332,7 @@
       needle.style.left = ((+tuner.value - MIN) / (MAX - MIN)) * 100 + '%';
 
       if (!powered) {
-        setStatic(0); status.textContent = 'ATTENTION, the radio works so stop your whining!'; status.classList.remove('locked');
+        setStatic(0); status.textContent = 'STANDBY'; status.classList.remove('locked');
         return;
       }
       const dist = Math.abs(f - cfg.TARGET);
@@ -342,9 +342,9 @@
         unlock();
         if (dist < 1.5) {
           setStatic(1 - (1.5 - dist) / 1.5 * 0.6);
-          status.textContent = 'ATTENTION, the radio works so stop your whining!';
+          status.textContent = 'SEARCHING…';
         } else {
-          setStatic(1); status.textContent = 'ATTENTION, the radio works so stop your whining!';
+          setStatic(1); status.textContent = 'NO SIGNAL';
         }
       }
     }
