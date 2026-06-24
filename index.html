@@ -319,8 +319,9 @@
       const val = parseFloat(inputStr);
       if (!isNaN(val) && val >= 88 && val <= 108) {
         curTenths = Math.round(val * 10);
-        update();
       }
+      if (powered) startStatic();
+      update();
     }
 
     document.querySelectorAll('.nk').forEach(btn => {
