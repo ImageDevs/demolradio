@@ -203,8 +203,8 @@
     const audio    = document.getElementById('broadcastAudio');
     const noise    = document.getElementById('staticAudio');
 
-    const MIN = 880, MAX = 1080;
-    let curTenths = 880;
+    const MIN = 111, MAX = 999;
+    let curTenths = 111;
     let inputStr = '';
     let powered = false;
     let locked = false;
@@ -292,13 +292,13 @@
 
     // tick marks
     const ticks = document.getElementById('ticks');
-    for (let f = 88; f <= 108; f += 0.5) {
+    for (let f = 11.5; f <= 99.9; f = Math.round((f + 0.5) * 10) / 10) {
       const pct = ((f*10 - MIN) / (MAX - MIN)) * 100;
       const t = document.createElement('div');
       t.className = 'tick ' + (Number.isInteger(f) ? 'major' : 'minor');
       t.style.left = pct + '%';
       ticks.appendChild(t);
-      if (Number.isInteger(f) && f % 4 === 0) {
+      if (Number.isInteger(f) && f % 10 === 0) {
         const lab = document.createElement('div');
         lab.className = 'tick-label'; lab.style.left = pct + '%'; lab.textContent = f;
         ticks.appendChild(lab);
@@ -317,7 +317,7 @@
       }
       numInput.textContent = inputStr || '–';
       const val = parseFloat(inputStr);
-      if (!isNaN(val) && val >= 88 && val <= 108) {
+      if (!isNaN(val) && val >= 11.1 && val <= 99.9) {
         curTenths = Math.round(val * 10);
       }
       if (powered) startStatic();
