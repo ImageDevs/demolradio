@@ -223,7 +223,7 @@
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
     function setStatic(level) { // 0..1
-      if (noiseGain) noiseGain.gain.setTargetAtTime(level * 0.25, audioCtx.currentTime, 0.1);
+      if (noiseGain) noiseGain.gain.setTargetAtTime(level * 0.6, audioCtx.currentTime, 0.05);
     }
 
     // ----- Built-in default broadcast (used when no audio file is set) -----
