@@ -3,7 +3,7 @@
 
 window.RADIO_CONFIG = {
   // The frequency (MHz) that unlocks the broadcast.
-  TARGET: 55.5,
+  TARGET: 19.4,
 
   // How precisely the listener must tune, in MHz. Smaller = harder.
   TOLERANCE: 0.2,
