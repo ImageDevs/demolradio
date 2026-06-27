@@ -188,8 +188,8 @@
   <script src="config.js"></script>
   <script>
   (function () {
-    const defaults = { TARGET: 104.5, TOLERANCE: 0.2, AUDIO_SRC: "", LOOP: true };
-    const cfg = Object.assign({}, defaults, window.RADIO_CONFIG || {});
+    const rc = window.RADIO_CONFIG || {};
+    const stations = rc.STATIONS || [{ TARGET: 55.5, TOLERANCE: 0.2, AUDIO_SRC: "", LOOP: false }];
 
     const tuner   = document.getElementById('tuner');
     const freqNum = document.getElementById('freqNum');
@@ -202,12 +202,7 @@
     const MIN = +tuner.min, MAX = +tuner.max;
     let powered = false;
     let locked = false;
-
-    const hasFile = !!(cfg.AUDIO_SRC && cfg.AUDIO_SRC.trim());
-    if (hasFile) {
-      audio.src = cfg.AUDIO_SRC;
-      audio.loop = !!cfg.LOOP;
-    }
+    let activeStation = null;
 
     // Generate soft static with the Web Audio API (no file needed).
     let audioCtx = null, noiseNode = null, noiseGain = null;
@@ -274,7 +269,7 @@
         if (!defaultActive) break;
         await new Promise(r => setTimeout(r, 350));
       }
-      if (defaultActive && cfg.LOOP) {
+      if (defaultActive) {
         await new Promise(r => setTimeout(r, 1200));
         if (defaultActive) runDefaultBroadcast();
       }
@@ -301,11 +296,15 @@
 
     const freq = () => (+tuner.value) / 10;
 
-    function lock() {
-      if (locked) return;
+    function lock(station) {
+      if (locked && activeStation === station) return;
+      if (locked) unlock();
       locked = true;
+      activeStation = station;
       setStatic(0);
-      if (hasFile) {
+      if (station.AUDIO_SRC) {
+        audio.src = station.AUDIO_SRC;
+        audio.loop = !!station.LOOP;
         audio.currentTime = 0;
         audio.play().catch(()=>{});
       } else {
@@ -317,8 +316,9 @@
     function unlock() {
       if (!locked) return;
       locked = false;
-      if (hasFile) audio.pause();
+      if (activeStation && activeStation.AUDIO_SRC) audio.pause();
       else stopDefaultBroadcast();
+      activeStation = null;
       status.classList.remove('locked');
     }
 
@@ -331,17 +331,23 @@
         setStatic(0); status.textContent = 'STANDBY'; status.classList.remove('locked');
         return;
       }
-      const dist = Math.abs(f - cfg.TARGET);
-      if (dist <= cfg.TOLERANCE) {
-        lock();
+
+      const hit = stations.find(s => Math.abs(f - s.TARGET) <= s.TOLERANCE);
+      if (hit) {
+        lock(hit);
+        return;
+      }
+
+      unlock();
+      const nearest = stations.reduce((best, s) => {
+        const d = Math.abs(f - s.TARGET);
+        return d < best.d ? { d, s } : best;
+      }, { d: Infinity }).d;
+      if (nearest < 1.5) {
+        setStatic(1 - (1.5 - nearest) / 1.5 * 0.6);
+        status.textContent = 'SEARCHING…';
       } else {
-        unlock();
-        if (dist < 1.5) {
-          setStatic(1 - (1.5 - dist) / 1.5 * 0.6);
-          status.textContent = 'SEARCHING…';
-        } else {
-          setStatic(1); status.textContent = 'NO SIGNAL';
-        }
+        setStatic(1); status.textContent = 'NO SIGNAL';
       }
     }
 
