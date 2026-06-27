@@ -305,7 +305,7 @@
       if (station.AUDIO_SRC) {
         audio.src = station.AUDIO_SRC;
         audio.loop = !!station.LOOP;
-        audio.currentTime = 0;
+        audio.currentTime = station.START || 0;
         audio.play().catch(()=>{});
       } else {
         runDefaultBroadcast();
